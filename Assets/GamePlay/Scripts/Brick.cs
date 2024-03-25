@@ -5,7 +5,6 @@ using UnityEngine;
 public class Brick : MonoBehaviour
 {
     private Renderer render;
-    private List<Collider> colliders;
     // Start is called before the first frame update
     void Start()
     {

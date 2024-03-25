@@ -16,15 +16,14 @@ public class Player : MonoBehaviour
     private int currentAnimNumber;
     private Vector3 currentEndPosition;
 
-
     [SerializeField] private LayerMask layer;
     [SerializeField] Rigidbody rb;
     [SerializeField] Animator anim;
     [SerializeField] Transform child;
-
+    [SerializeField] GameObject brick;
 
     private bool isMoving = false;
-
+    Quaternion rotation = Quaternion.Euler(-90f, 0f, 0f);
     private void Start()
     {
         count = 0;
@@ -70,20 +69,27 @@ public class Player : MonoBehaviour
         }
     }
 
-
-
-
-
-
 //---------------------------------------------------------------------------------------------------------------------------------------------------
  
 
-private void OnTriggerEnter(Collider collision)
+    
+    private void OnTriggerEnter(Collider collision)
     {
-        if ( collision.tag == "BrickRoad")
+        if (collision.tag == "BrickRoad")
         {
             count++;
             ChangeAnim("renwu", 1);
+            Vector3 CharPosition = transform.position;
+            Vector3 BrickPosition = transform.position;
+
+            CharPosition.y += 0.35f*(count +1)-1.2f;
+            BrickPosition.y += 0.35f * count-1.22f;
+
+            child.position = CharPosition;
+
+            GameObject newBrick = Instantiate(brick, BrickPosition, rotation);
+
+            newBrick.transform.SetParent(transform);
         }
         else
         {
