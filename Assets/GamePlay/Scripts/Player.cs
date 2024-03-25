@@ -1,173 +1,146 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
+
+public enum DirectType
+{
+    Forward = 0, Backward = 1,  Right = 2, Left = 3
+}
 
 public class Player : MonoBehaviour
 {
-    public float horizontalInput;
-    public float verticalInput;
-    private float raycast = 20f;
     public float raycastStep = 0.1f;
     public int count = 0;
-    [SerializeField] private LayerMask layer;
-    [SerializeField] private float speed = 10;
-    [SerializeField] Rigidbody rb;
+    private float raycast = 20f;
+    private int currentAnimNumber;
+    private Vector3 currentEndPosition;
 
-    private bool isRight = false;
-    private bool isLeft = false;
-    private bool isUp = false;
-    private bool isDown = false;
+
+    [SerializeField] private LayerMask layer;
+    [SerializeField] Rigidbody rb;
+    [SerializeField] Animator anim;
+    [SerializeField] Transform child;
+
+
     private bool isMoving = false;
 
-    void Update()
+    private void Start()
     {
-        //horizontalInput = Input.GetAxis("Horizontal");
-        //verticalInput = Input.GetAxis("Vertical");
-
-        //transform.Translate(Vector3.forward * Time.deltaTime * verticalInput);
-        //transform.Translate(Vector3.right * Time.deltaTime * horizontalInput);
-
-
-        //Debug.Log(CheckCollision(raycastStep));
+        count = 0;
+    }
+    void FixedUpdate()
+    {
+        float step = 15 * Time.fixedDeltaTime;
 
         //forward------------------------------------------------------------------------------------------
-        if (Input.GetAxisRaw("Vertical") > 0f && isDown == false && isRight == false && isLeft == false)
+        if (Input.GetAxisRaw("Vertical") > 0f && isMoving == false)
         {
-            isUp = true;
             isMoving = true;
-            //MoveUp();
-            //Debug.Log(isUp + "----------");
+            MoveDirect(DirectType.Forward);
         }
-        if (isMoving == true && isUp == true)
+        //Backward-----------------------------------------------------------------------------------------
+        else if (Input.GetAxisRaw("Vertical") < 0f && isMoving == false)
         {
-            MoveUp();
-        }
-        //Backward------------------------------------------------------------------------------------------
-        if (Input.GetAxisRaw("Vertical") < 0f && isUp == false && isRight == false && isLeft == false)
-        {
-            isDown = true;
             isMoving = true;
+            MoveDirect(DirectType.Backward);
         }
-        if (isMoving == true && isDown == true)
-        {
-            MoveDown();
-        }
-
         //Right--------------------------------------------------------------------------------------------
-        if (Input.GetAxisRaw("Horizontal") > 0f && isDown == false && isUp == false && isLeft == false)
+        else if (Input.GetAxisRaw("Horizontal") > 0f && isMoving == false)
         {
-            isRight = true;
             isMoving = true;
+            MoveDirect(DirectType.Right);
         }
-        if(isMoving == true && isRight == true)
+        //Left---------------------------------------------------------------------------------------------
+        else if (Input.GetAxisRaw("Horizontal") < 0f && isMoving == false)
         {
-            MoveRight();
+            isMoving = true;
+            MoveDirect(DirectType.Left);
         }
+        //Debug.Log(count + "--------");
 
-        //Left-----------------------------------------------------------------------------------------------
-        if (Input.GetAxisRaw("Horizontal") < 0f && isRight == false && isUp == false && isDown == false)
+        if (isMoving == true)
         {
-            isLeft = true;
-            isMoving=true;
-        }
-        if(isMoving==true && isLeft == true)
-        {
-            MoveLeft();
-        }
-    }
+            transform.position = Vector3.MoveTowards(transform.position, currentEndPosition, step);
 
-    private void MoveUp()
-    {
-        //CheckMoving();
-        Debug.DrawRay(transform.position, Vector3.forward * raycast, Color.blue);
-
-        Physics.Raycast(transform.position, Vector3.forward, out RaycastHit hitInfo, raycast, layer);
-        if (hitInfo.collider.gameObject.CompareTag("Wall"))
-        {
-            Debug.Log("hitwall");
-            Vector3 wallPosition = hitInfo.collider.transform.position;
-            //ransform.position = hitInfo.collider.transform.position-transform.forward*1;
-            //transform.position = new Vector3( wallPosition.x - transform.forward.x * 1, transform.position.y, wallPosition.z - transform.forward.z * 1);
-
-            float step = speed * Time.deltaTime;
-            Vector3 endPosition = Vector3.MoveTowards(transform.position, new Vector3(wallPosition.x - transform.forward.x * 1, transform.position.y, wallPosition.z - transform.forward.z * 1), step);
-            transform.position = endPosition;
-
-            if (transform.position == new Vector3(wallPosition.x - transform.forward.x * 1, transform.position.y, wallPosition.z - transform.forward.z * 1))
+            if (Vector3.Distance(transform.position, currentEndPosition) < 0.01f)
             {
-                isUp = false;
                 isMoving = false;
             }
         }
     }
 
-    private void MoveDown()
+
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+
+private void OnTriggerEnter(Collider collision)
     {
-        Debug.DrawRay(transform.position, -Vector3.forward * raycast, Color.blue);
-
-
-        Physics.Raycast(transform.position, -Vector3.forward, out RaycastHit hitInfo, raycast, layer);
-        if (hitInfo.collider.gameObject.CompareTag("Wall"))
+        if ( collision.tag == "BrickRoad")
         {
-            Debug.Log("hitwall");
-            //transform.position = hitInfo.collider.transform.position + transform.forward * 1;
-
-            Vector3 wallPosition = hitInfo.collider.transform.position;
-            //transform.position = new Vector3(wallPosition.x + transform.forward.x * 1, transform.position.y, wallPosition.z + transform.forward.z * 1);
-            float step = speed * Time.deltaTime;
-            Vector3 endPosition = Vector3.MoveTowards(transform.position, new Vector3(wallPosition.x + transform.forward.x * 1, transform.position.y, wallPosition.z + transform.forward.z * 1), step);
-            transform.position = endPosition;
-            if (transform.position == new Vector3(wallPosition.x + transform.forward.x * 1, transform.position.y, wallPosition.z + transform.forward.z * 1))
-            {
-                isDown = false;
-                isMoving = false;
-            }
+            count++;
+            ChangeAnim("renwu", 1);
+        }
+        else
+        {
+            ChangeAnim("renwu", 0);
         }
     }
 
-    private void MoveRight()
+    private void ChangeAnim(string animName, int number)
     {
-        Debug.DrawRay(transform.position, Vector3.right * raycast, Color.blue);
-
-        Physics.Raycast(transform.position, Vector3.right, out RaycastHit hitInfo, raycast, layer);
-        if (hitInfo.collider.gameObject.CompareTag("Wall"))
+        if (currentAnimNumber != number )
         {
-            Debug.Log("hitwall");
-            //transform.position = hitInfo.collider.transform.position - transform.right * 1;
-
-            Vector3 wallPosition = hitInfo.collider.transform.position;
-            //transform.position = new Vector3(wallPosition.x - transform.right.x * 1, transform.position.y, wallPosition.z - transform.right.z * 1);
-            float step = speed * Time.deltaTime;
-            Vector3 endPosition = Vector3.MoveTowards(transform.position, new Vector3(wallPosition.x - transform.right.x * 1, transform.position.y, wallPosition.z - transform.right.z * 1), step);
-            transform.position = endPosition;
-            if (transform.position == new Vector3(wallPosition.x - transform.right.x * 1, transform.position.y, wallPosition.z - transform.right.z * 1))
-            {
-                isRight = false;
-                isMoving = false;
-            }
+            anim.SetInteger(animName, number);
+            currentAnimNumber = number;
         }
     }
 
-    private void MoveLeft()
-    {
-        Debug.DrawRay(transform.position, Vector3.left * raycast, Color.blue);
 
-        Physics.Raycast(transform.position, -Vector3.right, out RaycastHit hitInfo, raycast, layer);
+
+    public void MoveDirect(DirectType directType) 
+    {
+        // di chuyen theo huong direct type
+        Vector3 direct = Vector3.forward;
+
+        switch (directType)
+        {
+            case DirectType.Forward:
+                direct = Vector3.forward;
+                break;
+            case DirectType.Backward:
+                direct = -Vector3.forward;
+                break;
+            case DirectType.Right:
+                direct = Vector3.right;
+                break;
+            case DirectType.Left:
+                direct = -Vector3.right;
+                break;
+        }
+        MoveDirect(direct);
+    }
+
+    public void MoveDirect(Vector3 direct)
+    {
+        Debug.DrawRay(transform.position, direct * raycast, Color.blue);
+        float step = 15 * Time.fixedDeltaTime;
+
+
+        Physics.Raycast(transform.position, direct, out RaycastHit hitInfo, raycast, layer);
         if (hitInfo.collider.gameObject.CompareTag("Wall"))
         {
-            Debug.Log("hitwall");
-            //transform.position = hitInfo.collider.transform.position + transform.right * 1;
             Vector3 wallPosition = hitInfo.collider.transform.position;
-            //transform.position = new Vector3(wallPosition.x + transform.right.x * 1, transform.position.y, wallPosition.z + transform.right.z * 1);
-            float step = speed * Time.deltaTime;
-            Vector3 endPosition = Vector3.MoveTowards(transform.position, new Vector3(wallPosition.x + transform.right.x * 1, transform.position.y, wallPosition.z + transform.right.z * 1), step);
-            transform.position = endPosition;
-            if (transform.position == new Vector3(wallPosition.x + transform.right.x * 1, transform.position.y, wallPosition.z + transform.right.z * 1))
+            Vector3 endPosition = new Vector3(wallPosition.x - direct.x * 1, transform.position.y, wallPosition.z - direct.z * 1);
+            if (currentEndPosition != endPosition)
             {
-                isLeft = false;
-                isMoving = false;
+                currentEndPosition = endPosition;
             }
+            transform.position = Vector3.MoveTowards(transform.position, currentEndPosition, step);
         }
     }
 }

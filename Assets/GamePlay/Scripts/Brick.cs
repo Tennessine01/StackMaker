@@ -22,8 +22,8 @@ public class Brick : MonoBehaviour
     {
         if (collision.tag == "Player")
         {
-            render.enabled = false;
-            //Destroy(gameObject);
+            //render.enabled = false;
+            Destroy(gameObject);
         }
     }
 }
