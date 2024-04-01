@@ -4,25 +4,29 @@ using UnityEngine;
 
 public class Brick : MonoBehaviour
 {
-    private Renderer render;
-    // Start is called before the first frame update
+    [SerializeField] private GameObject brick;
+    public bool isActive = true;
+
     void Start()
     {
-        render = GetComponent<Renderer>();
-    }
+        OnInit();
+    }                                                                                                                                                                                                                                                                                                                                                                                                               
 
-    // Update is called once per frame
-    void Update()
+    private void OnInit()
     {
-        
+        isActive = true;
+        brick.SetActive(true);
     }
-
-    private void OnTriggerEnter(Collider collision)
+    private void OnTriggerEnter(Collider other)
     {
-        if (collision.tag == "Player")
+        if (other.CompareTag("Player") && isActive)
         {
-            //render.enabled = false;
-            Destroy(gameObject);
+            if(brick != null)
+            {
+                isActive = false;
+                brick.SetActive(false);
+                BrickManager.instance.AddBrick();
+            }
         }
     }
 }

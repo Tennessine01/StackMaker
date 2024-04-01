@@ -12,11 +12,15 @@ public class CameraFollow : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        target = FindObjectOfType<Player>().transform;
+        OnInit();
     }
 
+    private void OnInit()
+    {
+        target = FindObjectOfType<BrickManager>().transform;
+    }
     // Update is called once per frame
-    void FixedUpdate()
+    void LateUpdate()
     {
         transform.position = Vector3.Lerp(transform.position, target.position + offset, Time.deltaTime * speed);
     }
